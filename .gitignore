@@ -20,6 +20,7 @@ yarn.lock
 *.swp
 *.swo
 *~
+attendee/
 
 # OS
 .DS_Store
@@ -39,7 +40,7 @@ tmp/
 temp/
 *.tmp
 
-# Audio/Video files (nếu không muốn commit)
+# Audio/Video files 
 *.mp3
 *.mp4
 *.wav
