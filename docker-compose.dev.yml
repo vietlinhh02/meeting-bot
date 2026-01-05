@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: meeting-bot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: meetingbot
+      POSTGRES_PASSWORD: meetingbot_dev_password
+      POSTGRES_DB: meetingbot
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meetingbot -d meetingbot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meeting-bot-network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: meeting-bot-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ""
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meeting-bot-network
+
+  # MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: meeting-bot-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Console port
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - meeting-bot-network
+
+  # MinIO Bucket Initialization
+  minio-init:
+    image: minio/mc:latest
+    container_name: meeting-bot-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to be ready...';
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --ignore-existing myminio/meeting-recordings;
+      /usr/bin/mc anonymous set download myminio/meeting-recordings;
+      echo 'MinIO bucket created successfully';
+      exit 0;
+      "
+    networks:
+      - meeting-bot-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  meeting-bot-network:
+    driver: bridge
