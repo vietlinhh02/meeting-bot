@@ -10,12 +10,194 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Add your models here
-// Example:
-// model User {
-//   id        String   @id @default(uuid())
-//   email     String   @unique
-//   password  String
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
+// Organization model (từ accounts/models.py)
+model Organization {
+  id                          Int     @id @default(autoincrement())
+  name                        String
+  centicredits                Int     @default(500)
+  version                     Int     @default(0)
+  isWebhooksEnabled           Boolean @default(true) @map("is_webhooks_enabled")
+  isAsyncTranscriptionEnabled Boolean @default(false) @map("is_async_transcription_enabled")
+  isManagedZoomOauthEnabled   Boolean @default(true) @map("is_managed_zoom_oauth_enabled")
+  isAppSessionsEnabled        Boolean @default(false) @map("is_app_sessions_enabled")
+
+  // Autopay fields
+  autopayEnabled               Boolean   @default(false) @map("autopay_enabled")
+  autopayThresholdCenticredits Int       @default(1000) @map("autopay_threshold_centricredits")
+  autopayAmountToPurchaseCents Int       @default(5000) @map("autopay_amount_to_purchase_cents")
+  autopayChargeTaskEnqueuedAt  DateTime? @map("autopay_charge_task_enqueued_at")
+  autopayChargeFailureData     Json?     @map("autopay_charge_failure_data")
+  autopayStripeCustomerId      String?   @map("autopay_stripe_customer_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users    User[]
+  projects Project[]
+
+  @@map("organizations")
+}
+
+// User model (từ accounts/models.py)
+model User {
+  id             Int      @id @default(autoincrement())
+  objectId       String   @unique @map("object_id")
+  email          String   @unique
+  password       String
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  role           UserRole @default(ADMIN)
+  isActive       Boolean  @default(true) @map("is_active")
+  organizationId Int      @map("organization_id")
+  invitedById    Int?     @map("invited_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  invitedBy    User?        @relation("UserInvites", fields: [invitedById], references: [id])
+  invitedUsers User[]       @relation("UserInvites")
+  apiKeys      ApiKey[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  REGULAR_USER
+}
+
+// API Key model
+model ApiKey {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  userId    Int      @map("user_id")
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("api_keys")
+}
+
+// Project model (từ bots/models.py)
+model Project {
+  id             Int      @id @default(autoincrement())
+  objectId       String   @unique @map("object_id")
+  name           String
+  organizationId Int      @map("organization_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  bots          Bot[]
+  zoomOauthApps ZoomOAuthApp[]
+
+  @@map("projects")
+}
+
+// Bot model - Core model
+model Bot {
+  id                 Int                @id @default(autoincrement())
+  objectId           String             @unique @map("object_id")
+  meetingUrl         String             @map("meeting_url")
+  botName            String?            @map("bot_name")
+  state              BotState           @default(JOINING)
+  transcriptionState TranscriptionState @default(NOT_STARTED) @map("transcription_state")
+  recordingState     RecordingState     @default(NOT_STARTED) @map("recording_state")
+  projectId          Int                @map("project_id")
+  metadata           Json?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  joinedAt           DateTime?          @map("joined_at")
+  leftAt             DateTime?          @map("left_at")
+
+  project    Project     @relation(fields: [projectId], references: [id])
+  recordings Recording[]
+  utterances Utterance[]
+  events     BotEvent[]
+
+  @@map("bots")
+}
+
+enum BotState {
+  JOINING
+  IN_MEETING
+  LEAVING
+  ENDED
+  FAILED
+}
+
+enum TranscriptionState {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  FAILED
+}
+
+enum RecordingState {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  FAILED
+}
+
+// Recording model
+model Recording {
+  id         Int      @id @default(autoincrement())
+  objectId   String   @unique @map("object_id")
+  botId      Int      @map("bot_id")
+  storageKey String   @map("storage_key")
+  storageUrl String?  @map("storage_url")
+  duration   Int?
+  fileSize   Int?     @map("file_size")
+  mimeType   String?  @map("mime_type")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  bot Bot @relation(fields: [botId], references: [id])
+
+  @@map("recordings")
+}
+
+// Utterance model (transcript)
+model Utterance {
+  id            Int      @id @default(autoincrement())
+  botId         Int      @map("bot_id")
+  speakerName   String   @map("speaker_name")
+  speakerUuid   String?  @map("speaker_uuid")
+  transcription String
+  timestampMs   Int      @map("timestamp_ms")
+  durationMs    Int      @map("duration_ms")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  bot Bot @relation(fields: [botId], references: [id])
+
+  @@map("utterances")
+}
+
+// Encrypted credentials storage
+model ZoomOAuthApp {
+  id            Int      @id @default(autoincrement())
+  objectId      String   @unique @map("object_id")
+  projectId     Int      @map("project_id")
+  clientId      String   @map("client_id")
+  encryptedData Bytes    @map("encrypted_data")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("zoom_oauth_apps")
+}
+
+// Webhook events
+model BotEvent {
+  id        Int      @id @default(autoincrement())
+  botId     Int      @map("bot_id")
+  eventType String   @map("event_type")
+  eventData Json?    @map("event_data")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  bot Bot @relation(fields: [botId], references: [id])
+
+  @@map("bot_events")
+}
