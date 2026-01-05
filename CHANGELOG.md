@@ -20,6 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 - Basic project structure
 
-[Unreleased]: https://github.com/your-username/meeting-bot/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/your-username/meeting-bot/releases/tag/v0.1.0
+[Unreleased]: https://github.com/vietlinhh02/meeting-bot/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/vietlinhh02/meeting-bot/releases/tag/v0.1.0
 

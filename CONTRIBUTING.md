@@ -106,7 +106,7 @@ docs(readme): update installation instructions
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/meeting-bot.git
+   git clone https://github.com/vietlinhh02/meeting-bot.git
    cd meeting-bot
    ```
 
