@@ -23,7 +23,7 @@ model Organization {
 
   // Autopay fields
   autopayEnabled               Boolean   @default(false) @map("autopay_enabled")
-  autopayThresholdCenticredits Int       @default(1000) @map("autopay_threshold_centricredits")
+  autopayThresholdCentricredits Int       @default(1000) @map("autopay_threshold_centricredits")
   autopayAmountToPurchaseCents Int       @default(5000) @map("autopay_amount_to_purchase_cents")
   autopayChargeTaskEnqueuedAt  DateTime? @map("autopay_charge_task_enqueued_at")
   autopayChargeFailureData     Json?     @map("autopay_charge_failure_data")
