@@ -1,74 +1,65 @@
 # Meeting Bot
 
-Meeting bot project được xây dựng để quản lý và tự động hóa các cuộc họp trực tuyến.
+AI-powered meeting bot similar to Recall AI - automatically records, transcribes, and summarizes meetings.
 
-## Tính năng
+## Features
 
-- Tích hợp với các nền tảng họp trực tuyến (Zoom, Google Meet, Microsoft Teams)
-- Quản lý bot tự động trong cuộc họp
-- Ghi lại và chuyển đổi cuộc họp thành văn bản
-- API RESTful để điều khiển bot
+- Automatic meeting recording
+- Speech-to-text transcription
+- AI-powered meeting summaries
+- Action items extraction and analysis
+- Meeting history storage and management
 
-## Cài đặt
+## Requirements
 
-### Yêu cầu
+- Node.js >= 18.0.0
+- npm or yarn
 
-- Python 3.10+
-- PostgreSQL
-- Redis
-- Docker (tùy chọn)
-
-### Cài đặt dependencies
+## Installation
 
 ```bash
-pip install -r requirements.txt
+npm install
 ```
 
-### Cấu hình môi trường
-
-Tạo file `.env` với các biến môi trường cần thiết:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/meeting_bot
-REDIS_URL=redis://localhost:6379/0
-SECRET_KEY=your-secret-key-here
-```
-
-### Chạy migrations
+## Usage
 
 ```bash
-python manage.py migrate
+npm start
 ```
 
-### Chạy server
+For development with auto-reload:
 
 ```bash
-python manage.py runserver
+npm run dev
 ```
 
-## Sử dụng
+## Project Structure
 
-### Tạo bot mới
-
-```bash
-curl -X POST http://localhost:8000/api/v1/bots \
-  -H 'Authorization: Token <YOUR_API_KEY>' \
-  -H 'Content-Type: application/json' \
-  -d '{"meeting_url": "https://zoom.us/j/123456789", "bot_name": "My Bot"}'
+```
+meeting-bot/
+├── src/           # Main source code
+├── config/        # Configuration files
+├── tests/         # Test files
+└── docs/          # Documentation
 ```
 
-### Kiểm tra trạng thái bot
+## Development
 
-```bash
-curl -X GET http://localhost:8000/api/v1/bots/<bot_id> \
-  -H 'Authorization: Token <YOUR_API_KEY>'
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
 
-## Phát triển
+## Contributing
 
-Xem thư mục `attendee/` để tham khảo cấu trúc và implementation chi tiết.
+Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) and [Code of Conduct](./CODE_OF_CONDUCT.md) before submitting pull requests.
+
+## Security
+
+Please see [SECURITY.md](./SECURITY.md) for security policy and reporting guidelines.
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a list of changes and version history.
 
 ## License
 
-Xem file LICENSE để biết thêm chi tiết.
+MIT License - see [LICENSE](./LICENSE) for details.
 
