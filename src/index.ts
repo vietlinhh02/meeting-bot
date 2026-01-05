@@ -1,46 +1,45 @@
-import express, { Application, Request, Response } from 'express';
 import dotenv from 'dotenv';
-import helmet from 'helmet';
-import cors from 'cors';
-import compression from 'compression';
+import createApp from './app.js';
+import logger from './config/logger.js';
 
 // Load environment variables
 dotenv.config();
 
-const app: Application = express();
+// Configuration
 const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Middleware
-app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
-app.use(compression()); // Compress responses
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-
-// Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
-// Root endpoint
-app.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'Meeting Bot API',
-    version: '0.1.0',
-    endpoints: {
-      health: '/health',
-    },
-  });
-});
+// Create Express application
+const app = createApp();
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+const server = app.listen(PORT, () => {
+  logger.info(`Server started successfully`, {
+    port: PORT,
+    environment: NODE_ENV,
+    nodeVersion: process.version,
+  });
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📝 Environment: ${NODE_ENV}`);
+  console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+  console.log(`📡 API endpoint: http://localhost:${PORT}/api/v1`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 export default app;

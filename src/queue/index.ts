@@ -1,5 +1,4 @@
 import { Queue, Worker, QueueEvents } from 'bullmq';
-import redis from '../config/redis';
 
 const queueName = process.env.QUEUE_NAME || 'meeting-jobs';
 const concurrency = parseInt(process.env.QUEUE_CONCURRENCY || '5');
